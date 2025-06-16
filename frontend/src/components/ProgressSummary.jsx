@@ -13,16 +13,16 @@ function ProgressSummary({ goals }) {
     >
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Today's Progress</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Status</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
-            {completedGoals} of {totalGoals} goals completed
+            {completedGoals} av {totalGoals} oppgåver løyst
           </p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300">
             {Math.round(progressPercentage)}%
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">Complete</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">ferdig!</div>
         </div>
       </div>
 
@@ -50,22 +50,22 @@ function ProgressSummary({ goals }) {
           className="flex items-center space-x-2 text-green-700 dark:text-green-400 transition-colors duration-300"
         >
           <span className="text-xl">🎉</span>
-          <span className="font-semibold">All goals completed! Great job!</span>
+          <span className="font-semibold">Du har løyst alle oppgåver. Dritbra!</span>
         </motion.div>
       ) : progressPercentage >= 70 ? (
         <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-400 transition-colors duration-300">
           <span className="text-xl">💪</span>
-          <span className="font-medium">You're doing great! Keep it up!</span>
+          <span className="font-medium">Snart i mål!</span>
         </div>
       ) : progressPercentage > 0 ? (
         <div className="flex items-center space-x-2 text-yellow-700 dark:text-yellow-400 transition-colors duration-300">
           <span className="text-xl">🚀</span>
-          <span className="font-medium">Good start! Let's keep going!</span>
+          <span className="font-medium">Du er godt i gong!</span>
         </div>
       ) : (
         <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 transition-colors duration-300">
           <span className="text-xl">🎯</span>
-          <span className="font-medium">Ready to tackle your goals?</span>
+          <span className="font-medium">Klar til å sette i gong?</span>
         </div>
       )}
     </motion.div>

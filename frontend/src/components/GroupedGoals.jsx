@@ -15,7 +15,7 @@ function GroupedGoals({ goals, onComplete }) {
         >
           <div className="flex items-center space-x-2 mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-              Active Goals ({incompleteGoals.length})
+              Uløyste oppgåver ({incompleteGoals.length})
             </h3>
             <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full animate-pulse"></div>
           </div>
@@ -42,7 +42,7 @@ function GroupedGoals({ goals, onComplete }) {
         >
           <div className="flex items-center space-x-2 mb-4">
             <h3 className="text-lg font-semibold text-green-700 dark:text-green-400 transition-colors duration-300">
-              Completed Goals ({completedGoals.length})
+              Løyste oppgåver ({completedGoals.length})
             </h3>
             <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full"></div>
           </div>
@@ -64,10 +64,10 @@ function GroupedGoals({ goals, onComplete }) {
                     <div className="flex-1">
                       <p className="text-green-800 dark:text-green-300 font-medium line-through transition-colors duration-300">{goal.text}</p>
                       <p className="text-xs text-green-600 dark:text-green-400 transition-colors duration-300">
-                        Completed at {goal.completedAt?.toLocaleTimeString() || 'Unknown time'}
+                        Ferdig {goal.completedAt?.toLocaleTimeString('no-NO', { hour12: false, hour: '2-digit', minute: '2-digit' }) || 'Ukjend tid'}
                       </p>
                     </div>
-                    <span className="text-green-600 dark:text-green-400 text-sm font-medium transition-colors duration-300">✓ Done</span>
+                    <span className="text-green-600 dark:text-green-400 text-sm font-medium transition-colors duration-300">✓ Ferdig</span>
                   </div>
                 </motion.div>
               ))}
@@ -83,9 +83,9 @@ function GroupedGoals({ goals, onComplete }) {
           animate={{ opacity: 1 }}
           className="text-center py-12"
         >
-          <div className="text-6xl mb-4">🎯</div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">No goals yet</h3>
-          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Add your first goal above to get started!</p>
+          <div className="text-6xl mb-4">✅</div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">Ingen oppgåver enda</h3>
+          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Legg til ei eller fleire oppgåver for å kome i gong!</p>
         </motion.div>
       )}
     </div>

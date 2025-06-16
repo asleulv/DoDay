@@ -8,7 +8,7 @@ function GoalInput({ onGoalSubmit, user }) {
     // Parse goals in real-time
     const parseGoals = (text) => {
         if (!text.trim()) return [];
-        
+
         const separators = /[,;]|\sand\s|\sog\s/i;
         return text.split(separators)
             .map(part => part.trim())
@@ -24,6 +24,22 @@ function GoalInput({ onGoalSubmit, user }) {
             await onGoalSubmit(goalText.trim());
             setGoalText('');
             setIsSubmitting(false);
+        }
+    };
+
+    const getTimeBasedGreeting = () => {
+        const hour = new Date().getHours();
+
+        if (hour >= 5 && hour < 10) {
+            return "God morgon";
+        } else if (hour >= 10 && hour < 17) {
+            return "God dag";
+        } else if (hour >= 17 && hour < 20) {
+            return "God ettermiddag";
+        } else if (hour >= 20 && hour < 23) {
+            return "God kveld";
+        } else {
+            return "God natt";
         }
     };
 
@@ -43,9 +59,9 @@ function GoalInput({ onGoalSubmit, user }) {
                 )}
                 <div>
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                        Good morning, {user.displayName?.split(' ')[0]}! 👋
+                        {getTimeBasedGreeting()}, {user.displayName?.split(' ')[0]}! 👋
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm transition-colors duration-300">What do you want to accomplish today?</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm transition-colors duration-300">Kva vil du få gjort i dag?</p>
                 </div>
             </div>
 
@@ -54,12 +70,12 @@ function GoalInput({ onGoalSubmit, user }) {
                     <textarea
                         value={goalText}
                         onChange={(e) => setGoalText(e.target.value)}
-                        placeholder="e.g., Finish the quarterly report, organize my workspace, call 3 potential clients..."
+                        placeholder="Til dømes: Les korrektur, send ut SMS, finn adressegrunnlag..."
                         className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors duration-300"
                         rows={3}
                         maxLength={500}
                     />
-                    
+
                     {/* Live Goal Preview */}
                     <AnimatePresence>
                         {parsedGoals.length > 0 && (
@@ -71,7 +87,7 @@ function GoalInput({ onGoalSubmit, user }) {
                             >
                                 <div className="flex items-center space-x-2 mb-2">
                                     <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                        Preview ({parsedGoals.length} goal{parsedGoals.length !== 1 ? 's' : ''}):
+                                        Legg til ({parsedGoals.length} oppgåver{parsedGoals.length !== 1 ? 's' : ''}):
                                     </span>
                                 </div>
                                 <div className="space-y-2">
@@ -94,10 +110,10 @@ function GoalInput({ onGoalSubmit, user }) {
 
                     <div className="flex justify-between items-center mt-2">
                         <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                            {goalText.length}/500 characters
+                            {goalText.length}/500 teikn
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                            💡 Tip: Separate multiple goals with commas
+                            💡 Bruk komma mellom oppgåvene
                         </span>
                     </div>
                 </div>
@@ -108,17 +124,17 @@ function GoalInput({ onGoalSubmit, user }) {
                     whileHover={{ scale: goalText.trim() ? 1.02 : 1 }}
                     whileTap={{ scale: goalText.trim() ? 0.98 : 1 }}
                     className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 ${goalText.trim() && !isSubmitting
-                            ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                        ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         }`}
                 >
                     {isSubmitting ? (
                         <div className="flex items-center justify-center space-x-2">
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Adding your goals...</span>
+                            <span>Legg til oppgåver...</span>
                         </div>
                     ) : (
-                        `🎯 Add ${parsedGoals.length > 0 ? parsedGoals.length : ''} Goal${parsedGoals.length !== 1 ? 's' : ''}`
+                        `✅ Legg til ${parsedGoals.length > 0 ? parsedGoals.length : ''} oppgåve${parsedGoals.length !== 1 ? 'r' : ''}`
                     )}
                 </motion.button>
             </form>

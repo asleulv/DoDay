@@ -6,7 +6,8 @@ import {
   doc, 
   query, 
   where, 
-  orderBy 
+  orderBy,
+  writeBatch 
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -65,6 +66,46 @@ export const updateGoalCompletion = async (userId, goalId, completed) => {
     });
   } catch (error) {
     console.error('Error updating goal:', error);
+    throw error;
+  }
+};
+
+// Clear goals based on completion status
+export const clearGoals = async (userId, option) => {
+  try {
+    const today = new Date().toDateString();
+    let q;
+    
+    if (option === 'completed') {
+      q = query(
+        collection(db, `users/${userId}/goals`),
+        where("date", "==", today),
+        where("completed", "==", true)
+      );
+    } else if (option === 'incomplete') {
+      q = query(
+        collection(db, `users/${userId}/goals`),
+        where("date", "==", today),
+        where("completed", "==", false)
+      );
+    } else { // 'all'
+      q = query(
+        collection(db, `users/${userId}/goals`),
+        where("date", "==", today)
+      );
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    
+    querySnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    return querySnapshot.size; // Return number of deleted goals
+  } catch (error) {
+    console.error('Error clearing goals:', error);
     throw error;
   }
 };
