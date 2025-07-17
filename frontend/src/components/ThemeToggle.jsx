@@ -1,6 +1,3 @@
-console.log('🔘 ThemeToggle.jsx file loaded!');
-
-
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 
