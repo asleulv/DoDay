@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 function GoalInput({ onGoalSubmit, user }) {
     const [goalText, setGoalText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { isDark } = useTheme();
 
     // Parse goals in real-time
     const parseGoals = (text) => {
@@ -43,6 +45,9 @@ function GoalInput({ onGoalSubmit, user }) {
         }
     };
 
+    // Use theme-aware logo
+    const logoSrc = isDark ? "/circle.png" : "/circle_light.png";
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -61,7 +66,7 @@ function GoalInput({ onGoalSubmit, user }) {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
                         {getTimeBasedGreeting()}, {user.displayName?.split(' ')[0]}! 👋
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm transition-colors duration-300">Kva vil du få gjort i dag?</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm transition-colors duration-300">Kva vil du få gjort?</p>
                 </div>
             </div>
 
@@ -134,9 +139,18 @@ function GoalInput({ onGoalSubmit, user }) {
                             <span>Legg til oppgåver...</span>
                         </div>
                     ) : (
-                        `✅ Legg til ${parsedGoals.length > 0 ? parsedGoals.length : ''} oppgåve${parsedGoals.length !== 1 ? 'r' : ''}`
+                        <span className="flex items-center justify-center">
+                            <img
+                                src={logoSrc}
+                                alt="Ferdig logo"
+                                className="w-5 h-5 mr-2"
+                                style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                            />
+                            {`Legg til ${parsedGoals.length > 0 ? parsedGoals.length : ''} oppgåve${parsedGoals.length !== 1 ? 'r' : ''}`}
+                        </span>
                     )}
                 </motion.button>
+
             </form>
         </motion.div>
     );

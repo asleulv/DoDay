@@ -9,11 +9,13 @@ import ProgressSummary from './components/ProgressSummary';
 import GroupedGoals from './components/GroupedGoals';
 import ThemeToggle from './components/ThemeToggle';
 import ClearTasks from './components/ClearTasks';
+import { useTheme } from './contexts/ThemeContext';
 
 function App() {
   const [user, loading, error] = useAuthState(auth);
   const [todaysGoals, setTodaysGoals] = useState([]);
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+  const { isDark } = useTheme();
 
   // Load goals when user logs in
   useEffect(() => {
@@ -128,6 +130,9 @@ function App() {
     }
   };
 
+  // Choose logo based on theme
+  const logoSrc = isDark ? '/circle.png' : '/circle_light.png';
+
   if (loading || isLoadingGoals) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -148,7 +153,15 @@ function App() {
         <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">✅ Ferdig!</h1>
+              <div className="flex items-center">
+                <img
+                  src={logoSrc}
+                  alt="Ferdig logo"
+                  className="w-8 h-8 mr-2"
+                />
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">Ferdig!</span>
+              </div>
+
               <div className="flex items-center space-x-4">
                 <ThemeToggle />
                 <button
@@ -185,7 +198,15 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">✅ Ferdig!</h1>
+          <div className="flex items-center mb-2">
+            <img
+              src={logoSrc}
+              alt="Ferdig logo"
+              className="w-10 h-10 mr-3"
+            />
+            <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">Ferdig!</span>
+          </div>
+
           <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Eitt skritt om gongen</p>
         </div>
 
