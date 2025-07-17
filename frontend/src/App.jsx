@@ -2,19 +2,26 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
-import { saveGoalToFirestore, loadTodaysGoals, updateGoalCompletion, clearGoals } from './utils/firestoreUtils';
+import {
+  saveGoalToFirestore,
+  loadTodaysGoals,
+  updateGoalCompletion,
+  clearGoals
+} from './utils/firestoreUtils';
 import GoalInput from './components/GoalInput';
 import TaskBreakdown from './components/TaskBreakdown';
 import ProgressSummary from './components/ProgressSummary';
 import GroupedGoals from './components/GroupedGoals';
 import ThemeToggle from './components/ThemeToggle';
 import ClearTasks from './components/ClearTasks';
+import CompletedTasks from './components/CompletedTasks';
 import { useTheme } from './contexts/ThemeContext';
 
 function App() {
   const [user, loading, error] = useAuthState(auth);
   const [todaysGoals, setTodaysGoals] = useState([]);
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   const { isDark } = useTheme();
 
   // Load goals when user logs in
@@ -44,10 +51,11 @@ function App() {
     if (!user) return;
 
     const separators = /[,;]|\sand\s|\sog\s/i;
-    const goalParts = goalText.split(separators)
-      .map(part => part.trim())
-      .filter(part => part.length > 0)
-      .map(part => {
+    const goalParts = goalText
+      .split(separators)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+      .map((part) => {
         // Capitalize first letter of each goal
         return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
       });
@@ -66,7 +74,7 @@ function App() {
           completedAt: null
         };
 
-        setTodaysGoals(prevGoals => [...prevGoals, newGoal]);
+        setTodaysGoals((prevGoals) => [...prevGoals, newGoal]);
       }
     } catch (error) {
       console.error('Failed to save goals:', error);
@@ -81,10 +89,11 @@ function App() {
 
       // Update local state based on option
       if (option === 'completed') {
-        setTodaysGoals(prevGoals => prevGoals.filter(goal => !goal.completed));
+        setTodaysGoals((prevGoals) => prevGoals.filter((goal) => !goal.completed));
       } else if (option === 'incomplete') {
-        setTodaysGoals(prevGoals => prevGoals.filter(goal => goal.completed));
-      } else { // 'all'
+        setTodaysGoals((prevGoals) => prevGoals.filter((goal) => goal.completed));
+      } else {
+        // 'all'
         setTodaysGoals([]);
       }
 
@@ -102,8 +111,8 @@ function App() {
       await updateGoalCompletion(user.uid, completedGoal.id, true);
 
       // Update local state
-      setTodaysGoals(prevGoals =>
-        prevGoals.map(goal =>
+      setTodaysGoals((prevGoals) =>
+        prevGoals.map((goal) =>
           goal.id === completedGoal.id
             ? { ...goal, completed: true, completedAt: new Date() }
             : goal
@@ -154,15 +163,18 @@ function App() {
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
-                <img
-                  src={logoSrc}
-                  alt="Ferdig logo"
-                  className="w-8 h-8 mr-2"
-                />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">Ferdig!</span>
+                <img src={logoSrc} alt="Ferdig logo" className="w-8 h-8 mr-2" />
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Ferdig!
+                </span>
               </div>
-
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowArchive((show) => !show)}
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {showArchive ? 'Tilbake' : 'Arkiv'}
+                </button>
                 <ThemeToggle />
                 <button
                   onClick={handleSignOut}
@@ -177,18 +189,23 @@ function App() {
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <GoalInput onGoalSubmit={handleGoalSubmit} user={user} />
+          {showArchive ? (
+            <CompletedTasks user={user} />
+          ) : (
+            <>
+              <GoalInput onGoalSubmit={handleGoalSubmit} user={user} />
 
-          {/* Add this line */}
-          {todaysGoals.length > 0 && (
-            <div className="flex justify-between items-center mb-6">
-              <div></div>
-              <ClearTasks goals={todaysGoals} onClearTasks={handleClearTasks} />
-            </div>
+              {todaysGoals.length > 0 && (
+                <div className="flex justify-between items-center mb-6">
+                  <div></div>
+                  <ClearTasks goals={todaysGoals} onClearTasks={handleClearTasks} />
+                </div>
+              )}
+
+              {todaysGoals.length > 0 && <ProgressSummary goals={todaysGoals} />}
+              <GroupedGoals goals={todaysGoals} onComplete={handleGoalComplete} />
+            </>
           )}
-
-          {todaysGoals.length > 0 && <ProgressSummary goals={todaysGoals} />}
-          <GroupedGoals goals={todaysGoals} onComplete={handleGoalComplete} />
         </div>
       </div>
     );
@@ -199,15 +216,15 @@ function App() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center mb-2">
-            <img
-              src={logoSrc}
-              alt="Ferdig logo"
-              className="w-10 h-10 mr-3"
-            />
-            <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">Ferdig!</span>
+            <img src={logoSrc} alt="Ferdig logo" className="w-10 h-10 mr-3" />
+            <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+              Ferdig!
+            </span>
           </div>
 
-          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Eitt skritt om gongen</p>
+          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
+            Eitt skritt om gongen
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm transition-colors duration-300">
