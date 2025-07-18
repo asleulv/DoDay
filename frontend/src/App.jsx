@@ -215,7 +215,7 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="flex items-center mb-2">
+          <div className="flex items-center justify-center mb-2">
             <img src={logoSrc} alt="Ferdig logo" className="w-10 h-10 mr-3" />
             <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
               Ferdig!
@@ -223,7 +223,7 @@ function App() {
           </div>
 
           <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
-            Eitt skritt om gongen
+            Ein liten, ukomplisert app som gjer det lettare å få oversikt over det skal og det du har gjort.
           </p>
         </div>
 
