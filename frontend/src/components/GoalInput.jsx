@@ -11,10 +11,13 @@ function GoalInput({ onGoalSubmit, user }) {
     const parseGoals = (text) => {
         if (!text.trim()) return [];
 
-        const separators = /[,;]|\sand\s|\sog\s/i;
-        return text.split(separators)
-            .map(part => part.trim())
-            .filter(part => part.length > 0);
+        // Split on commas or newline (Windows \r\n, Mac \r, Linux \n)
+        const separators = /,|\r?\n/;
+
+        return text
+            .split(separators)
+            .map((part) => part.trim())
+            .filter((part) => part.length > 0);
     };
 
     const parsedGoals = parseGoals(goalText);
@@ -118,7 +121,7 @@ function GoalInput({ onGoalSubmit, user }) {
                             {goalText.length}/500 teikn
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                            💡 Bruk komma mellom oppgåvene
+                            💡 Bruk komma eller linjeskift mellom oppgåvene
                         </span>
                     </div>
                 </div>
