@@ -48,38 +48,38 @@ function App() {
   };
 
   const handleGoalSubmit = async (goalText) => {
-    if (!user) return;
+  if (!user) return;
 
-    const separators = /[,;]|\sand\s|\sog\s/i;
-    const goalParts = goalText
-      .split(separators)
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0)
-      .map((part) => {
-        // Capitalize first letter of each goal
-        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-      });
+  const separators = /,|\r?\n/;
 
-    try {
-      // Save each goal to Firestore
-      for (const part of goalParts) {
-        const goalId = await saveGoalToFirestore(user.uid, part);
+  const goalParts = goalText
+    .split(separators)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+    .map((part) => {
+      // Capitalize first letter
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    });
 
-        // Add to local state immediately for better UX
-        const newGoal = {
-          id: goalId,
-          text: part,
-          createdAt: new Date(),
-          completed: false,
-          completedAt: null
-        };
+  try {
+    for (const part of goalParts) {
+      const goalId = await saveGoalToFirestore(user.uid, part);
 
-        setTodaysGoals((prevGoals) => [...prevGoals, newGoal]);
-      }
-    } catch (error) {
-      console.error('Failed to save goals:', error);
+      const newGoal = {
+        id: goalId,
+        text: part,
+        createdAt: new Date(),
+        completed: false,
+        completedAt: null,
+      };
+
+      setTodaysGoals((prevGoals) => [...prevGoals, newGoal]);
     }
-  };
+  } catch (error) {
+    console.error('Failed to save goals:', error);
+  }
+};
+
 
   const handleClearTasks = async (option) => {
     if (!user) return;
