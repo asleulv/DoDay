@@ -4,7 +4,7 @@ import { signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 import {
   saveGoalToFirestore,
-  loadTodaysGoals,
+  loadActiveGoals,
   updateGoalCompletion,
   clearGoals
 } from './utils/firestoreUtils';
@@ -38,7 +38,7 @@ function App() {
 
     setIsLoadingGoals(true);
     try {
-      const goals = await loadTodaysGoals(user.uid);
+      const goals = await loadActiveGoals(user.uid);
       setTodaysGoals(goals);
     } catch (error) {
       console.error('Failed to load goals:', error);

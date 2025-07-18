@@ -1,19 +1,18 @@
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  updateDoc, 
-  doc, 
-  query, 
-  where, 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  doc,
+  query,
+  where,
   orderBy,
-  writeBatch 
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // Helper to safely convert Firestore timestamp or null to JS Date
 function toDateMaybe(ts) {
-  // Works for Timestamp, Date, or null/undefined
   if (!ts) return null;
   if (typeof ts.toDate === "function") return ts.toDate();
   if (ts instanceof Date) return ts;
@@ -28,7 +27,7 @@ export const saveGoalToFirestore = async (userId, goalText) => {
       completed: false,
       createdAt: new Date(),
       completedAt: null,
-      date: new Date().toDateString() // For daily organization
+      date: new Date().toDateString() // For grouping by display date
     });
     return docRef.id;
   } catch (error) {
@@ -37,36 +36,49 @@ export const saveGoalToFirestore = async (userId, goalText) => {
   }
 };
 
-// Load today's goals for a user
-export const loadTodaysGoals = async (userId) => {
+export const loadActiveGoals = async (userId) => {
   try {
-    const today = new Date().toDateString();
-    const q = query(
-      collection(db, `users/${userId}/goals`),
-      where("date", "==", today),
-      orderBy("createdAt", "asc")
-    );
-    
-    const querySnapshot = await getDocs(q);
-    const goals = [];
-    querySnapshot.forEach((docSnap) => {
+    const todayStr = new Date().toDateString();
+    const goalsRef = collection(db, `users/${userId}/goals`);
+
+    // 1. Incomplete goals (from any day)
+    const incompleteQuery = query(goalsRef, where('completed', '==', false));
+    const incompleteSnap = await getDocs(incompleteQuery);
+    const incompleteGoals = incompleteSnap.docs.map((docSnap) => {
       const data = docSnap.data();
-      goals.push({
+      return {
         id: docSnap.id,
         ...data,
         createdAt: toDateMaybe(data.createdAt),
         completedAt: toDateMaybe(data.completedAt)
-      });
+      };
     });
-    return goals;
+
+    // 2. Completed today
+    const completedTodayQuery = query(
+      goalsRef,
+      where('completed', '==', true),
+      where('date', '==', todayStr),
+    );
+    const completedSnap = await getDocs(completedTodayQuery);
+    const completedGoals = completedSnap.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        createdAt: toDateMaybe(data.createdAt),
+        completedAt: toDateMaybe(data.completedAt)
+      };
+    });
+
+    return [...incompleteGoals, ...completedGoals];
   } catch (error) {
-    console.error('Error loading goals:', error);
+    console.error('Error loading active goals:', error);
     throw error;
   }
 };
 
-// Load all completed goals for a user (for archive)
-// Sorted with newest completed first
+// (existing completed goals archive)
 export const loadAllCompletedGoals = async (userId) => {
   try {
     const q = query(
@@ -75,17 +87,15 @@ export const loadAllCompletedGoals = async (userId) => {
       orderBy("completedAt", "desc")
     );
     const querySnapshot = await getDocs(q);
-    const completedGoals = [];
-    querySnapshot.forEach((docSnap) => {
+    return querySnapshot.docs.map((docSnap) => {
       const data = docSnap.data();
-      completedGoals.push({
+      return {
         id: docSnap.id,
         ...data,
         createdAt: toDateMaybe(data.createdAt),
         completedAt: toDateMaybe(data.completedAt)
-      });
+      };
     });
-    return completedGoals;
   } catch (error) {
     console.error('Error loading completed goals:', error);
     throw error;
@@ -106,12 +116,12 @@ export const updateGoalCompletion = async (userId, goalId, completed) => {
   }
 };
 
-// Clear goals based on completion status
+// Clear goals based on completion status for today
 export const clearGoals = async (userId, option) => {
   try {
     const today = new Date().toDateString();
     let q;
-    
+
     if (option === 'completed') {
       q = query(
         collection(db, `users/${userId}/goals`),
@@ -124,29 +134,28 @@ export const clearGoals = async (userId, option) => {
         where("date", "==", today),
         where("completed", "==", false)
       );
-    } else { // 'all'
+    } else {
       q = query(
         collection(db, `users/${userId}/goals`),
         where("date", "==", today)
       );
     }
-    
+
     const querySnapshot = await getDocs(q);
     const batch = writeBatch(db);
-    
     querySnapshot.forEach((doc) => {
       batch.delete(doc.ref);
     });
-    
+
     await batch.commit();
-    return querySnapshot.size; // Return number of deleted goals
+    return querySnapshot.size;
   } catch (error) {
     console.error('Error clearing goals:', error);
     throw error;
   }
 };
 
-// Clear all completed goals for a user (for the archive)
+// Clear all completed goals entirely
 export const clearAllCompletedGoals = async (userId) => {
   try {
     const q = query(
