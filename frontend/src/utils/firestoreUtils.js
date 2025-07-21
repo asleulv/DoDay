@@ -1,47 +1,69 @@
 import {
   collection,
-  addDoc,
   getDocs,
   updateDoc,
   doc,
+  deleteDoc,
   query,
   where,
   orderBy,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // Helper to safely convert Firestore timestamp or null to JS Date
 function toDateMaybe(ts) {
   if (!ts) return null;
-  if (typeof ts.toDate === "function") return ts.toDate();
+  if (typeof ts.toDate === 'function') return ts.toDate();
   if (ts instanceof Date) return ts;
   return null;
 }
 
-// Save a goal to Firestore
-export const saveGoalToFirestore = async (userId, goalText) => {
+// Save multiple structured goals (each with an array of subtasks { title, completed })
+export const saveGoalToFirestore = async (userId, goals) => {
   try {
-    const docRef = await addDoc(collection(db, `users/${userId}/goals`), {
-      text: goalText,
-      completed: false,
-      createdAt: new Date(),
-      completedAt: null,
-      date: new Date().toDateString() // For grouping by display date
+    const coll = collection(db, `users/${userId}/goals`);
+    const batch = writeBatch(db);
+    const timestamp = new Date();
+    const todayStr = timestamp.toDateString();
+
+    goals.forEach((goal) => {
+      const docRef = doc(coll); // generate a new doc ID
+      batch.set(docRef, {
+        text: goal.text,
+        subtasks: (goal.subtasks || []).map((titleOrObj) =>
+          typeof titleOrObj === 'string'
+            ? { title: titleOrObj, completed: false }
+            : { title: titleOrObj.title, completed: !!titleOrObj.completed }
+        ),
+        completed:
+          (goal.subtasks || []).length > 0
+            ? (goal.subtasks || []).every(
+                (st) =>
+                  (typeof st === 'object' ? st.completed : false) === true
+              )
+            : false,
+        createdAt: timestamp,
+        completedAt: null,
+        date: todayStr,
+      });
     });
-    return docRef.id;
+
+    await batch.commit();
+    return true;
   } catch (error) {
-    console.error('Error adding goal:', error);
+    console.error('Error adding goals:', error);
     throw error;
   }
 };
 
+// Load incomplete + today's completed goals
 export const loadActiveGoals = async (userId) => {
   try {
     const todayStr = new Date().toDateString();
     const goalsRef = collection(db, `users/${userId}/goals`);
 
-    // 1. Incomplete goals (from any day)
+    // 1. Incomplete goals
     const incompleteQuery = query(goalsRef, where('completed', '==', false));
     const incompleteSnap = await getDocs(incompleteQuery);
     const incompleteGoals = incompleteSnap.docs.map((docSnap) => {
@@ -49,8 +71,13 @@ export const loadActiveGoals = async (userId) => {
       return {
         id: docSnap.id,
         ...data,
+        subtasks: (data.subtasks || []).map((st) =>
+          typeof st === 'string'
+            ? { title: st, completed: false }
+            : { title: st.title, completed: !!st.completed }
+        ),
         createdAt: toDateMaybe(data.createdAt),
-        completedAt: toDateMaybe(data.completedAt)
+        completedAt: toDateMaybe(data.completedAt),
       };
     });
 
@@ -58,7 +85,7 @@ export const loadActiveGoals = async (userId) => {
     const completedTodayQuery = query(
       goalsRef,
       where('completed', '==', true),
-      where('date', '==', todayStr),
+      where('date', '==', todayStr)
     );
     const completedSnap = await getDocs(completedTodayQuery);
     const completedGoals = completedSnap.docs.map((docSnap) => {
@@ -66,8 +93,13 @@ export const loadActiveGoals = async (userId) => {
       return {
         id: docSnap.id,
         ...data,
+        subtasks: (data.subtasks || []).map((st) =>
+          typeof st === 'string'
+            ? { title: st, completed: false }
+            : { title: st.title, completed: !!st.completed }
+        ),
         createdAt: toDateMaybe(data.createdAt),
-        completedAt: toDateMaybe(data.completedAt)
+        completedAt: toDateMaybe(data.completedAt),
       };
     });
 
@@ -78,13 +110,13 @@ export const loadActiveGoals = async (userId) => {
   }
 };
 
-// (existing completed goals archive)
+// Load all completed goals (for archive / history view)
 export const loadAllCompletedGoals = async (userId) => {
   try {
     const q = query(
       collection(db, `users/${userId}/goals`),
-      where("completed", "==", true),
-      orderBy("completedAt", "desc")
+      where('completed', '==', true),
+      orderBy('completedAt', 'desc')
     );
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((docSnap) => {
@@ -92,8 +124,13 @@ export const loadAllCompletedGoals = async (userId) => {
       return {
         id: docSnap.id,
         ...data,
+        subtasks: (data.subtasks || []).map((st) =>
+          typeof st === 'string'
+            ? { title: st, completed: false }
+            : { title: st.title, completed: !!st.completed }
+        ),
         createdAt: toDateMaybe(data.createdAt),
-        completedAt: toDateMaybe(data.completedAt)
+        completedAt: toDateMaybe(data.completedAt),
       };
     });
   } catch (error) {
@@ -102,13 +139,36 @@ export const loadAllCompletedGoals = async (userId) => {
   }
 };
 
-// Update goal completion status
+// Update a specific subtask's completion and propagate main task completion status
+export const updateSubtasksAndGoalCompletion = async (
+  userId,
+  goalId,
+  updatedSubtasks
+) => {
+  try {
+    const goalRef = doc(db, `users/${userId}/goals`, goalId);
+    const allComplete =
+      updatedSubtasks.length > 0 &&
+      updatedSubtasks.every((sub) => sub.completed);
+
+    await updateDoc(goalRef, {
+      subtasks: updatedSubtasks,
+      completed: allComplete,
+      completedAt: allComplete ? new Date() : null,
+    });
+  } catch (error) {
+    console.error('Error updating subtasks:', error);
+    throw error;
+  }
+};
+
+// (Optional) To manually mark main-task complete (should rarely be used now)
 export const updateGoalCompletion = async (userId, goalId, completed) => {
   try {
     const goalRef = doc(db, `users/${userId}/goals`, goalId);
     await updateDoc(goalRef, {
       completed,
-      completedAt: completed ? new Date() : null
+      completedAt: completed ? new Date() : null,
     });
   } catch (error) {
     console.error('Error updating goal:', error);
@@ -116,7 +176,7 @@ export const updateGoalCompletion = async (userId, goalId, completed) => {
   }
 };
 
-// Clear goals based on completion status for today
+// Clear today's goals based on option: "completed", "incomplete", or "all"
 export const clearGoals = async (userId, option) => {
   try {
     const today = new Date().toDateString();
@@ -125,19 +185,20 @@ export const clearGoals = async (userId, option) => {
     if (option === 'completed') {
       q = query(
         collection(db, `users/${userId}/goals`),
-        where("date", "==", today),
-        where("completed", "==", true)
+        where('date', '==', today),
+        where('completed', '==', true)
       );
     } else if (option === 'incomplete') {
       q = query(
         collection(db, `users/${userId}/goals`),
-        where("date", "==", today),
-        where("completed", "==", false)
+        where('date', '==', today),
+        where('completed', '==', false)
       );
     } else {
+      // all goals from today
       q = query(
         collection(db, `users/${userId}/goals`),
-        where("date", "==", today)
+        where('date', '==', today)
       );
     }
 
@@ -155,20 +216,26 @@ export const clearGoals = async (userId, option) => {
   }
 };
 
-// Clear all completed goals entirely
+// Remove all completed goals permanently
 export const clearAllCompletedGoals = async (userId) => {
   try {
     const q = query(
       collection(db, `users/${userId}/goals`),
-      where("completed", "==", true)
+      where('completed', '==', true)
     );
     const snapshot = await getDocs(q);
     const batch = writeBatch(db);
-    snapshot.forEach(docSnap => batch.delete(docSnap.ref));
+    snapshot.forEach((docSnap) => batch.delete(docSnap.ref));
     await batch.commit();
     return snapshot.size;
   } catch (error) {
     console.error('Error clearing completed goals:', error);
     throw error;
   }
+};
+
+// Slett eit enkelt mål
+export const deleteGoal = async (userId, goalId) => {
+  const goalRef = doc(db, `users/${userId}/goals/${goalId}`);
+  await deleteDoc(goalRef);
 };

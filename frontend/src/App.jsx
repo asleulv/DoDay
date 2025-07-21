@@ -18,24 +18,15 @@ import CompletedTasks from './components/CompletedTasks';
 import { useTheme } from './contexts/ThemeContext';
 
 function App() {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
   const [todaysGoals, setTodaysGoals] = useState([]);
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
+  const [completedRefresh, setCompletedRefresh] = useState(0); // 👈 NYTT
   const { isDark } = useTheme();
-
-  // Load goals when user logs in
-  useEffect(() => {
-    if (user && !loading) {
-      loadUserGoals();
-    } else if (!user && !loading) {
-      setTodaysGoals([]);
-    }
-  }, [user, loading]);
 
   const loadUserGoals = async () => {
     if (!user) return;
-
     setIsLoadingGoals(true);
     try {
       const goals = await loadActiveGoals(user.uid);
@@ -47,77 +38,57 @@ function App() {
     }
   };
 
-  const handleGoalSubmit = async (goalText) => {
-  if (!user) return;
+  const refreshGoals = async () => {
+    if (!user) return;
+    const updated = await loadActiveGoals(user.uid);
+    setTodaysGoals(updated);
+    setCompletedRefresh(Date.now()); // 👈 Trigg visning i arkiv
+  };
 
-  const separators = /,|\r?\n/;
-
-  const goalParts = goalText
-    .split(separators)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0)
-    .map((part) => {
-      // Capitalize first letter
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    });
-
-  try {
-    for (const part of goalParts) {
-      const goalId = await saveGoalToFirestore(user.uid, part);
-
-      const newGoal = {
-        id: goalId,
-        text: part,
-        createdAt: new Date(),
-        completed: false,
-        completedAt: null,
-      };
-
-      setTodaysGoals((prevGoals) => [...prevGoals, newGoal]);
+  useEffect(() => {
+    if (user && !loading) {
+      loadUserGoals();
+    } else if (!user && !loading) {
+      setTodaysGoals([]);
     }
-  } catch (error) {
-    console.error('Failed to save goals:', error);
-  }
-};
+  }, [user, loading]);
 
+  const handleGoalSubmit = async (structuredGoals) => {
+    if (!user || structuredGoals.length === 0) return;
+    try {
+      await saveGoalToFirestore(user.uid, structuredGoals);
+      await refreshGoals();
+    } catch (error) {
+      console.error('Failed to save structured goals:', error);
+    }
+  };
 
   const handleClearTasks = async (option) => {
     if (!user) return;
 
     try {
-      const deletedCount = await clearGoals(user.uid, option);
-
-      // Update local state based on option
+      // ❌ Fjern sletting av completed via clearGoals
       if (option === 'completed') {
-        setTodaysGoals((prevGoals) => prevGoals.filter((goal) => !goal.completed));
+        setTodaysGoals(prev => prev.filter(goal => !goal.completed));
       } else if (option === 'incomplete') {
-        setTodaysGoals((prevGoals) => prevGoals.filter((goal) => goal.completed));
+        setTodaysGoals(prev => prev.filter(goal => goal.completed));
       } else {
-        // 'all'
+        // sletter visning av alle (men ikkje frå Firestore)
         setTodaysGoals([]);
       }
 
-      console.log(`Cleared ${deletedCount} goals`);
+      setCompletedRefresh(Date.now());
+      console.log(`Rydda visninga (${option})`);
     } catch (error) {
-      console.error('Failed to clear goals:', error);
+      console.error('Rydding feila:', error);
     }
   };
 
   const handleGoalComplete = async (completedGoal) => {
     if (!user) return;
-
     try {
-      // Update in Firestore
       await updateGoalCompletion(user.uid, completedGoal.id, true);
-
-      // Update local state
-      setTodaysGoals((prevGoals) =>
-        prevGoals.map((goal) =>
-          goal.id === completedGoal.id
-            ? { ...goal, completed: true, completedAt: new Date() }
-            : goal
-        )
-      );
+      await refreshGoals();
     } catch (error) {
       console.error('Failed to update goal:', error);
     }
@@ -139,7 +110,6 @@ function App() {
     }
   };
 
-  // Choose logo based on theme
   const logoSrc = isDark ? '/circle.png' : '/circle_light.png';
 
   if (loading || isLoadingGoals) {
@@ -171,14 +141,14 @@ function App() {
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => setShowArchive((show) => !show)}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
                 >
                   {showArchive ? 'Tilbake' : 'Arkiv'}
                 </button>
                 <ThemeToggle />
                 <button
                   onClick={handleSignOut}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
                 >
                   Logg ut
                 </button>
@@ -190,20 +160,28 @@ function App() {
         {/* Main Content */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           {showArchive ? (
-            <CompletedTasks user={user} />
+            <CompletedTasks user={user} refreshSignal={completedRefresh} />
           ) : (
             <>
               <GoalInput onGoalSubmit={handleGoalSubmit} user={user} />
-
               {todaysGoals.length > 0 && (
                 <div className="flex justify-between items-center mb-6">
                   <div></div>
-                  <ClearTasks goals={todaysGoals} onClearTasks={handleClearTasks} />
+                  <ClearTasks
+                    goals={todaysGoals}
+                    onClearTasks={handleClearTasks}
+                  />
                 </div>
               )}
-
-              {todaysGoals.length > 0 && <ProgressSummary goals={todaysGoals} />}
-              <GroupedGoals goals={todaysGoals} onComplete={handleGoalComplete} />
+              {todaysGoals.length > 0 && (
+                <ProgressSummary goals={todaysGoals} />
+              )}
+              <GroupedGoals
+                goals={todaysGoals}
+                user={user}
+                onComplete={handleGoalComplete}
+                refreshGoals={refreshGoals}
+              />
             </>
           )}
         </div>
@@ -221,12 +199,10 @@ function App() {
               Ferdig!
             </span>
           </div>
-
           <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
-            Ein liten, ukomplisert app som gjer det lettare å få oversikt over det skal og det du har gjort.
+            Ein liten, ukomplisert app som gjer det lettare å få oversikt over det du skal og det du har gjort.
           </p>
         </div>
-
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm transition-colors duration-300">
           <button
             onClick={signInWithGoogle}

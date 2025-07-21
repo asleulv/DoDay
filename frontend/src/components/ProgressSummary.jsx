@@ -1,9 +1,17 @@
 import { motion } from 'framer-motion';
 
 function ProgressSummary({ goals }) {
-  const completedGoals = goals.filter(goal => goal.completed).length;
-  const totalGoals = goals.length;
-  const progressPercentage = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+  // 👇 Normalize all "work units": subtasks OR tasks without subtasks
+  const allWorkItems = goals.flatMap((goal) =>
+    goal.subtasks && goal.subtasks.length > 0
+      ? goal.subtasks.map((sub) => ({ completed: sub.completed }))
+      : [{ completed: goal.completed }]
+  );
+
+  const completedCount = allWorkItems.filter((item) => item.completed).length;
+  const totalCount = allWorkItems.length;
+  const progressPercentage =
+    totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
     <motion.div
@@ -13,16 +21,21 @@ function ProgressSummary({ goals }) {
     >
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Status</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+            Status
+          </h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
-            {completedGoals} av {totalGoals} oppgåver løyst
+            {completedCount} av {totalCount} oppgåve
+            {totalCount !== 1 ? 'r' : ''} løyst
           </p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300">
             {Math.round(progressPercentage)}%
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">ferdig!</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+            ferdig!
+          </div>
         </div>
       </div>
 
@@ -31,18 +44,18 @@ function ProgressSummary({ goals }) {
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progressPercentage}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
           className={`h-3 rounded-full transition-all ${
-            progressPercentage === 100 
-              ? 'bg-green-500 dark:bg-green-400' 
-              : progressPercentage >= 70 
-              ? 'bg-blue-500 dark:bg-blue-400' 
+            progressPercentage === 100
+              ? 'bg-green-500 dark:bg-green-400'
+              : progressPercentage >= 70
+              ? 'bg-blue-500 dark:bg-blue-400'
               : 'bg-yellow-500 dark:bg-yellow-400'
           }`}
         />
       </div>
 
-      {/* Status Message */}
+      {/* Boost Message */}
       {progressPercentage === 100 ? (
         <motion.div
           initial={{ scale: 0 }}
