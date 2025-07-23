@@ -54,12 +54,20 @@ function GroupedGoals({ goals, user, onComplete, refreshGoals }) {
                       title="Slett oppgåve"
                       className="hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded transition-colors"
                     >
-                      {/* Moderne trash-ikon */}
-                      <svg className="w-5 h-5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M3 6h18M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6h16" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M10 11v6m4-6v6" />
+                      {/* Heroicons Trash */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m5 0H4"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -102,11 +110,12 @@ function GroupedGoals({ goals, user, onComplete, refreshGoals }) {
                       {goal.subtasks?.length > 0 && (
                         <ul className="ml-4 mt-1 list-disc text-sm text-green-700 dark:text-green-400 space-y-0.5">
                           {goal.subtasks.map((subtask, idx) => (
-                            <li key={idx}>↳ {subtask.title}</li>
+                            <li key={idx}>{subtask.title}</li>
                           ))}
                         </ul>
                       )}
-                      <p className="text-xs text-green-600 dark:text-green-400 transition-colors duration-300">
+                      <hr className="my-4 border-t border-green-300 dark:border-green-900" />
+                      <p className="text-xs text-green-600 dark:text-green-400 transition-colors mt-2 duration-300">
                         Ferdig{' '}
                         {goal.completedAt?.toLocaleTimeString('no-NO', {
                           hour12: false,
@@ -120,12 +129,21 @@ function GroupedGoals({ goals, user, onComplete, refreshGoals }) {
                       title="Slett oppgåve"
                       className="hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded transition-colors"
                     >
-                      <svg className="w-5 h-5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M3 6h18M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6h16" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M10 11v6m4-6v6" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m5 0H4"
+                        />
                       </svg>
+
                     </button>
                   </div>
                 </motion.div>

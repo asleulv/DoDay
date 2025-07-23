@@ -22,7 +22,8 @@ function App() {
   const [todaysGoals, setTodaysGoals] = useState([]);
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
-  const [completedRefresh, setCompletedRefresh] = useState(0); // 👈 NYTT
+  const [completedRefresh, setCompletedRefresh] = useState(0);
+  const [completedTasks, setCompletedTasks] = useState([]); // 💡 Nytt: fullførte oppgåver
   const { isDark } = useTheme();
 
   const loadUserGoals = async () => {
@@ -42,14 +43,14 @@ function App() {
     if (!user) return;
     const updated = await loadActiveGoals(user.uid);
     setTodaysGoals(updated);
-    setCompletedRefresh(Date.now()); // 👈 Trigg visning i arkiv
+    setCompletedRefresh(Date.now());
   };
 
   useEffect(() => {
-    if (user && !loading) {
-      loadUserGoals();
-    } else if (!user && !loading) {
+    if (user && !loading) loadUserGoals();
+    else if (!user && !loading) {
       setTodaysGoals([]);
+      setCompletedTasks([]); // 💡 Tømmar ved utlogging
     }
   }, [user, loading]);
 
@@ -59,28 +60,24 @@ function App() {
       await saveGoalToFirestore(user.uid, structuredGoals);
       await refreshGoals();
     } catch (error) {
-      console.error('Failed to save structured goals:', error);
+      console.error('Failed to save goals:', error);
     }
   };
 
   const handleClearTasks = async (option) => {
     if (!user) return;
-
     try {
-      // ❌ Fjern sletting av completed via clearGoals
       if (option === 'completed') {
-        setTodaysGoals(prev => prev.filter(goal => !goal.completed));
+        setTodaysGoals((prev) => prev.filter((goal) => !goal.completed));
       } else if (option === 'incomplete') {
-        setTodaysGoals(prev => prev.filter(goal => goal.completed));
+        setTodaysGoals((prev) => prev.filter((goal) => goal.completed));
       } else {
-        // sletter visning av alle (men ikkje frå Firestore)
         setTodaysGoals([]);
       }
-
       setCompletedRefresh(Date.now());
-      console.log(`Rydda visninga (${option})`);
+      console.log(`Cleared tasks (${option})`);
     } catch (error) {
-      console.error('Rydding feila:', error);
+      console.error('Failed to clear tasks:', error);
     }
   };
 
@@ -98,7 +95,7 @@ function App() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Google sign-in error:', error);
     }
   };
 
@@ -106,7 +103,7 @@ function App() {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Sign-out error:', error);
     }
   };
 
@@ -127,55 +124,55 @@ function App() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 transition-all duration-700">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <img src={logoSrc} alt="Ferdig logo" className="w-8 h-8 mr-2" />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Ferdig!
-                </span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setShowArchive((show) => !show)}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  {showArchive ? 'Tilbake' : 'Arkiv'}
-                </button>
-                <ThemeToggle />
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  Logg ut
-                </button>
-              </div>
+        <header className="bg-white dark:bg-gray-800 shadow border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <img src={logoSrc} alt="Ferdig logo" className="w-8 h-8" />
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">Ferdig!</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowArchive((prev) => !prev)}
+                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                {showArchive ? 'Tilbake' : 'Arkiv'}
+              </button>
+              <ThemeToggle />
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Logg ut
+              </button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-8">
           {showArchive ? (
-            <CompletedTasks user={user} refreshSignal={completedRefresh} />
+            // 💡 CompletedTasks sender tilbake oppgåver når den laster ferdig
+            <CompletedTasks
+              user={user}
+              refreshSignal={completedRefresh}
+              onLoaded={(tasks) => setCompletedTasks(tasks)} // 👈 ny prop
+            />
           ) : (
             <>
-              <GoalInput onGoalSubmit={handleGoalSubmit} user={user} />
+              <GoalInput
+                onGoalSubmit={handleGoalSubmit}
+                user={user}
+                archivedGoals={completedTasks} // 👈 ny prop
+              />
               {todaysGoals.length > 0 && (
-                <div className="flex justify-between items-center mb-6">
-                  <div></div>
-                  <ClearTasks
-                    goals={todaysGoals}
-                    onClearTasks={handleClearTasks}
-                  />
+                <div className="flex justify-between mb-6">
+                  <div />
+                  <ClearTasks goals={todaysGoals} onClearTasks={handleClearTasks} />
                 </div>
               )}
-              {todaysGoals.length > 0 && (
-                <ProgressSummary goals={todaysGoals} />
-              )}
+              {todaysGoals.length > 0 && <ProgressSummary goals={todaysGoals} />}
               <GroupedGoals
                 goals={todaysGoals}
                 user={user}
@@ -184,39 +181,46 @@ function App() {
               />
             </>
           )}
-        </div>
+        </main>
       </div>
     );
   }
 
+  // Not logged in view
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <img src={logoSrc} alt="Ferdig logo" className="w-10 h-10 mr-3" />
-            <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
-              Ferdig!
-            </span>
-          </div>
-          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
-            Ein liten, ukomplisert app som gjer det lettare å få oversikt over det du skal og det du har gjort.
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-all duration-700">
+      <div className="max-w-md w-full p-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border dark:border-gray-700 space-y-6">
+        <div className="flex items-center justify-center space-x-3">
+          <img src={logoSrc} alt="Ferdig logo" className="w-10 h-10" />
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Ferdig!</h1>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm transition-colors duration-300">
-          <button
-            onClick={signInWithGoogle}
-            className="w-full flex justify-center items-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-          >
-            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Fortsett med Google
-          </button>
-        </div>
+        <p className="text-center text-gray-600 dark:text-gray-300">
+          Ein liten, ukomplisert app som gjer det lettare å få oversikt over det du skal og det du har gjort.
+        </p>
+        <button
+          onClick={signInWithGoogle}
+          className="w-full flex items-center justify-center px-5 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg shadow hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300"
+        >
+          <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+            />
+          </svg>
+          Fortsett med Google
+        </button>
       </div>
     </div>
   );

@@ -69,8 +69,8 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-lg shadow-sm p-6 mb-4 transition-all duration-300 ${isTaskComplete
-                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                 }`}
         >
             <div className="flex items-start space-x-4">
@@ -80,8 +80,8 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all mt-1 ${isManuallyCompleted
-                                ? 'bg-green-500 border-green-500 text-white'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
                             }`}
                     >
                         {isManuallyCompleted && (
@@ -103,40 +103,39 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
                 )}
 
                 {/* ✅ Main Content */}
-                <div className="flex-1 pt-1">
+                <div className="flex-1 pt-1 min-w-0 w-full">
                     <div className="flex items-center flex-wrap gap-2 mb-2">
-  <h3 className={`text-lg font-semibold transition-all duration-300 ${
-    isTaskComplete
-      ? 'text-green-700 dark:text-green-400 line-through'
-      : 'text-gray-900 dark:text-white'
-  }`}>
-    {goal.text}
-  </h3>
+                        <h3 className={`text-lg font-semibold transition-all duration-300 ${isTaskComplete
+                                ? 'text-green-700 dark:text-green-400 line-through'
+                                : 'text-gray-900 dark:text-white'
+                            }`}>
+                            {goal.text}
+                        </h3>
 
-  {/* Notat-ikon ved sidan av tittelen */}
-  {user && goal && (
-    <button
-      onClick={() => setShowNote(!showNote)}
-      title={goal.note ? 'Vis / rediger notat' : 'Legg til notat'}
-      className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-5 h-5 text-blue-500 dark:text-blue-300 hover:text-blue-600 dark:hover:text-blue-200 transition-colors"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M7 8h10M7 12h4m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"
-        />
-      </svg>
-    </button>
-  )}
-</div>
+                        {/* Notat-ikon ved sidan av tittelen */}
+                        {user && goal && (
+                            <button
+                                onClick={() => setShowNote(!showNote)}
+                                title={goal.note ? 'Vis / rediger notat' : 'Legg til notat'}
+                                className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-5 h-5 text-blue-500 dark:text-blue-300 hover:text-blue-600 dark:hover:text-blue-200 transition-colors"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M7 8h10M7 12h4m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
 
 
                     {/* Subtasks */}
@@ -148,8 +147,8 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
                                         aria-label="Toggle subtask"
                                         onClick={() => handleSubtaskToggle(i)}
                                         className={`w-5 h-5 flex items-center justify-center rounded-full border-2 transition ${subtask.completed
-                                                ? 'bg-green-500 border-green-500 text-white'
-                                                : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+                                            ? 'bg-green-500 border-green-500 text-white'
+                                            : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
                                             }`}
                                     >
                                         {subtask.completed && (
@@ -170,8 +169,8 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
                                     </button>
                                     <span
                                         className={`${subtask.completed
-                                                ? 'line-through text-gray-400 dark:text-gray-600'
-                                                : 'text-gray-800 dark:text-gray-200'
+                                            ? 'line-through text-gray-400 dark:text-gray-600'
+                                            : 'text-gray-800 dark:text-gray-200'
                                             }`}
                                     >
                                         {subtask.title}

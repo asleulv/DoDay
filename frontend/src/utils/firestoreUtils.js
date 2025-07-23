@@ -8,6 +8,8 @@ import {
   where,
   orderBy,
   writeBatch,
+  limit,
+  startAfter
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -239,3 +241,41 @@ export const deleteGoal = async (userId, goalId) => {
   const goalRef = doc(db, `users/${userId}/goals/${goalId}`);
   await deleteDoc(goalRef);
 };
+
+export async function loadCompletedGoalsPaginated(
+  uid,
+  searchTerm = '',
+  lastDoc = null,
+  pageSize = 30
+) {
+  if (!uid) return { tasks: [], lastVisible: null }
+
+  try {
+    const ref = collection(db, `users/${uid}/goals`)
+    let q = query(
+      ref,
+      where('completed', '==', true),
+      orderBy('completedAt', 'desc'),
+      limit(pageSize)
+    )
+
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc))
+    }
+
+    const snapshot = await getDocs(q)
+    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    const lastVisible = snapshot.docs[snapshot.docs.length - 1] ?? null
+
+    return {
+      tasks: tasks || [],
+      lastVisible
+    }
+  } catch (e) {
+    console.error('🔥 Firestore error:', e)
+    return {
+      tasks: [],
+      lastVisible: null
+    }
+  }
+}
