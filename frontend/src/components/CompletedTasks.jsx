@@ -195,14 +195,29 @@ function CompletedTasks({ user }) {
 
                                         <div className="flex items-center space-x-4 sm:ml-6">
                                             <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                                {task.completedAt
-                                                    ? new Date(task.completedAt).toLocaleTimeString('no-NO', {
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                        hour12: false,
-                                                    })
-                                                    : 'Ukjend tidspunkt'}
+                                                {(() => {
+                                                    try {
+                                                        if (!task.completedAt) return 'Ukjend tidspunkt'
+
+                                                        // Støtter også Firestore Timestamp-objekter som har toDate()
+                                                        const date =
+                                                            typeof task.completedAt.toDate === 'function'
+                                                                ? task.completedAt.toDate()
+                                                                : new Date(task.completedAt)
+
+                                                        if (isNaN(date.getTime())) return 'Ugyldig tidspunkt'
+
+                                                        return date.toLocaleTimeString('no-NO', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: false,
+                                                        })
+                                                    } catch {
+                                                        return 'Ugyldig tidspunkt'
+                                                    }
+                                                })()}
                                             </span>
+
                                             <button
                                                 onClick={() => handleDelete(task.id)}
                                                 title="Slett oppgåve frå arkivet"
