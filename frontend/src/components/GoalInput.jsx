@@ -92,7 +92,13 @@ function GoalInput({ onGoalSubmit, user, archivedGoals = [] }) {
         } else {
             setSuggestion('')
         }
+
+        console.log('Current suggestion:', suggestion, 'Query:', getActiveLineInfo(goalText).value);
+
     }, [goalText, archivedGoals])
+    
+
+    
 
     const handleKeyDown = (e) => {
         if (!suggestion) return
