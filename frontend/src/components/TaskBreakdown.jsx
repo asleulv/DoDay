@@ -5,15 +5,15 @@ import {
     updateGoalCompletion
 } from '../utils/firestoreUtils';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase'; // 👈 pass på at du importerer db
+import { db } from '../firebase'; 
 
 function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
     const [subtasks, setSubtasks] = useState(goal.subtasks || []);
     const [isManuallyCompleted, setIsManuallyCompleted] = useState(goal.completed);
 
-    const [showNote, setShowNote] = useState(false); // 👈
-    const [noteText, setNoteText] = useState(goal.note || ''); // 👈
-    const [savingNote, setSavingNote] = useState(false); // 👈
+    const [showNote, setShowNote] = useState(false); 
+    const [noteText, setNoteText] = useState(goal.note || ''); 
+    const [savingNote, setSavingNote] = useState(false); 
 
     const hasSubtasks = subtasks.length > 0;
     const isTaskComplete = hasSubtasks
@@ -68,9 +68,9 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-lg shadow-sm p-6 mb-4 transition-all duration-300 ${isTaskComplete
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+            className={`rounded-lg shadow-sm px-3 py-2 mb-1 text-sm leading-snug transition-all duration-300 ${isTaskComplete
+                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                 }`}
         >
             <div className="flex items-start space-x-4">
@@ -106,8 +106,8 @@ function TaskBreakdown({ goal, user, onComplete, refreshGoals }) {
                 <div className="flex-1 pt-1 min-w-0 w-full">
                     <div className="flex items-center flex-wrap gap-2 mb-2">
                         <h3 className={`text-lg font-semibold transition-all duration-300 ${isTaskComplete
-                                ? 'text-green-700 dark:text-green-400 line-through'
-                                : 'text-gray-900 dark:text-white'
+                            ? 'text-green-700 dark:text-green-400 line-through'
+                            : 'text-gray-900 dark:text-white'
                             }`}>
                             {goal.text}
                         </h3>
